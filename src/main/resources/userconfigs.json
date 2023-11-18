@@ -1,0 +1,9 @@
+{
+  "db": {
+    "URL": "database url here",
+    "username": "database username here",
+    "pass": "database password here"
+  },
+
+  "token": "discord bot token here"
+}
