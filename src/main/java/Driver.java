@@ -5,19 +5,59 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Mono;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.LinkedList;
 import java.sql.*;
+import java.util.Scanner;
 
 
 public class Driver {
-    /*
-    todo instead of running these through commmand line args, use userconfigs.json
-    args[0] = discord bot token
-    args[1] = db url
-    args[2] = db username
-    args[3] = db pass
-     */
     public static void main(String[] args) throws Exception{
+        String botToken;
+        String db_url;
+        String db_username;
+        String db_password;
+        try{
+            BufferedReader userConfigsReader = new BufferedReader(new FileReader("src/main/resources/userconfigs.json"));
+            JsonReader userConfigReader = Json.createReader(userConfigsReader);
+            JsonObject userConfig = userConfigReader.readObject();
+
+            botToken = userConfig.getString("token");
+
+            JsonObject dbinfo = userConfig.getJsonObject("db");
+            db_url = dbinfo.getString("URL");
+            db_username = dbinfo.getString("username");
+            db_password = dbinfo.getString("pass");
+        }
+        catch (Exception e){
+            Scanner input = new Scanner(System.in);
+            if(e instanceof FileNotFoundException){
+                System.out.println("userconfigs file not present at src/main/resources/");
+            }
+            else{
+                System.out.println("userconfigs.json failed to parse");
+            }
+            System.out.println("Please enter necessary startup details manually\n");
+            System.out.println("enter your discord provided bot token: ");
+            botToken = input.nextLine();
+
+            System.out.println("enter your database url: ");
+            db_url = input.nextLine();
+
+            System.out.println("enter your mysql username: ");
+            db_username = input.nextLine();
+
+            System.out.println("enter your mysql password: ");
+            db_password = input.nextLine();
+        }
+
+
+
         Connection dbConnect;
         try{
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -25,14 +65,14 @@ public class Driver {
            throw e;
         }
         try{
-            //todo edit here to remove the hardcoded parameters
-            dbConnect = DriverManager.getConnection(args[1], args[2], args[3]);
+            dbConnect = DriverManager.getConnection(db_url, db_username, db_password);
         }
         catch(SQLException e){
            throw e;
         }
 
-        DiscordClient client = DiscordClient.create(args[0]);
+
+        DiscordClient client = DiscordClient.create(botToken);
         GatewayDiscordClient gatewayDiscordClientMono = client.login().block();
 
         LinkedList<String> commandFiles = new LinkedList<>();
@@ -42,12 +82,14 @@ public class Driver {
 
         new GlobalCommandRegistrar(gatewayDiscordClientMono.getRestClient()).registerCommands(commandFiles);
 
+        Cooldown cooldown = new Cooldown(dbConnect);
+
         Mono<Void> newMSG = client.withGateway((GatewayDiscordClient gateway) -> {
             Mono<Void> onMessage = gateway.on(MessageCreateEvent.class, event -> {
                 Message message = event.getMessage();
                 if (message.getAuthor().isPresent()) {
                     if (!message.getAuthor().get().isBot()) {
-                       //todo logic for msg actions and cooldowns
+                        //todo logic for messages
                     }
                 }
                 return Mono.empty();
