@@ -79,6 +79,9 @@ public class Driver {
         commandFiles.add("cooldown.json");
         commandFiles.add("cooldownlist.json");
         commandFiles.add("rmvcooldown.json");
+//        commandFiles.add("addlistitem.json");
+//        commandFiles.add("info.json");
+//        commandFiles.add("showList.json");
 
         new GlobalCommandRegistrar(gatewayDiscordClientMono.getRestClient()).registerCommands(commandFiles);
 
@@ -98,7 +101,11 @@ public class Driver {
             Mono<Void> onSlash = gateway.on(ChatInputInteractionEvent.class, event -> {
                 //todo logic for slash commands
                 if(event.getCommandName().equals("oncooldown")){
-
+                    try {
+                        return SlashHandlers.handleOnCooldown(event, dbConnect);
+                    } catch (SQLException e) {
+                        return event.reply("slash command failed. database error");
+                    }
                 }
                 else if(event.getCommandName().equals("cooldownlist")){
 

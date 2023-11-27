@@ -1,0 +1,18 @@
+{
+  "name" : "addlistitem",
+  "description" : "add a list item to a list",
+  "options": [
+    {
+      "name": "list",
+      "description": "the list to be added to",
+      "type": 3,
+      "required": true
+    },
+    {
+      "name" : "item",
+      "description" : "the item to be added to the list",
+      "type" : 3,
+      "required" : true
+    }
+  ]
+}
